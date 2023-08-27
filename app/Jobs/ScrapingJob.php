@@ -19,28 +19,35 @@ class ScrapingJob implements ShouldQueue
 
     /**
      * Execute the job.
+     * This method initiates the web scraping process to gather book data.
      */
     public function handle(): void
     {
+        // Initialize a Guzzle client for sending HTTP requests
         $client = new Client([
             'headers' => [
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36',
             ],
         ]);
 
+        // Build the base URI and current page path for scraping
         $baseUri = 'https://www.kotobati.com/section/%D8%B1%D9%88%D8%A7%D9%8A%D8%A7%D8%AA';
         $currentPagePath = '?page=' . $this->getPageCounter(); // Append the page number
 
+        // Send an HTTP request and parse the response using DomCrawler
         $response = $client->get($baseUri . $currentPagePath);
         $body = $response->getBody();
-
         $crawler = new Crawler($body, $baseUri);
 
+        // Define batch size for efficient batch insertion
         $batchSize = 100; // Batch size for batch insertion
         $batch = [];
 
+        // Loop through each book element and extract relevant data
         $crawler->filter(".section-page .row .info .views-infinite-scroll-content-wrapper .views-row")->each(
             function ($book) use(&$batch, $batchSize, $client) {
+
+                // Extract book data from the current book element
                 $title = $book->filter('.book-teaser h3 a')->text();
                 $author = $book->filter('.book-teaser p a')->text();
                 $link = $book->filter('.book-teaser a');
@@ -71,7 +78,7 @@ class ScrapingJob implements ShouldQueue
                     $actual_download_link = $download_link;
                 }
 
-
+                // Prepare book data for batch insertion
                 $batch[] = [
                     'title' => $title,
                     'author' => $author,
