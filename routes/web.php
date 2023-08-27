@@ -14,4 +14,5 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', [ScraperController::class, 'index']);
+Route::get('/', [ScraperController::class, 'index'])->name('home');
+Route::get('/load_more', [ScraperController::class, 'loadMore'])->name('load_more');
